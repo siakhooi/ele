@@ -1,0 +1,10 @@
+#!/bin/bash
+
+readonly config_file="$HOME/.ele/config.yaml"
+
+if [[ ! -f $config_file ]]; then
+  mkdir -p "$(dirname "$config_file")"
+  touch "$config_file"
+fi
+
+${EDITOR:-vi} "$config_file"

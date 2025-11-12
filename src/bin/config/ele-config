@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [[ $# -ne 0 ]] && [[ $# -ne 1 ]]; then
+  echo "Usage: $(basename "$0") [yaml_path]"
+  exit 0
+fi
+
+readonly config_file="$HOME/.ele/config.yaml"
+readonly yaml_path=$1
+
+if [[ -f "$config_file" ]]; then
+  if [[ $# -eq 0 ]]; then
+    yq "$config_file"
+  elif [[ $# -eq 1 ]]; then
+    yq "$yaml_path"' // ""' "$config_file"
+  fi
+fi

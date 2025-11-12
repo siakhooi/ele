@@ -1,0 +1,60 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $(basename "$0") [-h] [-f] [-j] yaml_path value"
+  echo "  -f : value is a filename contains the yaml value"
+  echo "  -j : value is json value"
+}
+while getopts "hfj" arg; do
+  case $arg in
+  h)
+    usage
+    exit 0
+    ;;
+  f)
+    value_is_filename="Y"
+    ;;
+  j)
+    value_is_json="Y"
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+if is-true "$value_is_filename" && is-true "$value_is_json"; then
+  echo.error "-f and -j is mutually exclusive"
+  exit 1
+fi
+
+if [[ $# -ne 2 ]]; then
+  usage
+  exit 0
+fi
+readonly yaml_path=$1
+readonly value=$2
+
+readonly file_path="$HOME/.ele/config.yaml"
+
+if [[ ! -f $file_path ]]; then
+  mkdir -p "$(dirname "$file_path")"
+  touch "$file_path"
+fi
+
+if [[ -n $value ]]; then
+  if is-true "$value_is_filename"; then
+    value1=$(yq -oj "$value" | jq -c)
+    yq_query=$(printf '%s =%s' "$yaml_path" "$value1")
+  elif is-true "$value_is_json"; then
+    yq_query=$(printf '%s =%s' "$yaml_path" "$value")
+  else
+    yq_query=$(printf '%s ="%s"' "$yaml_path" "$value")
+  fi
+else
+  yq_query=$(printf 'del(%s)' "$yaml_path")
+fi
+
+yq eval "$yq_query" -i "$file_path"
