@@ -1,5 +1,5 @@
 Name:           siakhooi-ele
-Version:        0.1.1
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        docker compose cluster for local developments
 
@@ -26,6 +26,10 @@ docker compose cluster for local developments.
 %{_bindir}/ele-config-set
 
 %changelog
+* Tue Apr 7 2026 Siak Hooi <siakhooi@gmail.com> - 0.2.0
+- ele-config -h
+- ele-config-edit -h
+
 * Wed Nov 12 2025 Siak Hooi <siakhooi@gmail.com> - 0.1.1
 - fix release bugs
 
