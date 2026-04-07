@@ -1,7 +1,23 @@
 #!/bin/bash
 
+usage() {
+  echo "Usage: $(basename "$0") [-h] [yaml_path]"
+}
+while getopts "h" arg; do
+  case $arg in
+  h)
+    usage
+    exit 0
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+  esac
+done
+shift $((OPTIND - 1))
 if [[ $# -ne 0 ]] && [[ $# -ne 1 ]]; then
-  echo "Usage: $(basename "$0") [yaml_path]"
+  usage
   exit 0
 fi
 

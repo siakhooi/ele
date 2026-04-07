@@ -9,8 +9,6 @@ build-rpm: clean shellcheck
 	scripts/build-rpms.sh
 set-version:
 	scripts/set-version.sh
-commit:
-	scripts/git-commit-and-push.sh
 release:
 	scripts/create-release.sh
 all-deb: clean set-version build-deb
@@ -24,3 +22,7 @@ rpm-install:
 	rpm -i ./*.rpm
 rpm-uninstall:
 	rpm -e siakhooi-ele
+docker-build-rpm:
+	docker run --rm -v $(CURDIR):/workspaces docker.io/siakhooi/devcontainer:rpm scripts/build-rpms.sh
+docker-build-deb:
+	docker run --rm -v $(CURDIR):/workspaces docker.io/siakhooi/devcontainer:deb scripts/build-deb.sh
