@@ -15,8 +15,10 @@ docker compose cluster for local developments.
 
 %install
 %{__mkdir}   -v -p %{buildroot}%{_bindir}
+%{__mkdir}   -v -p %{buildroot}%{_libdir}/ele
 %{__mkdir}   -v -p %{buildroot}/usr/share/licenses/siakhooi-ele
 %{__install} -v -m 0755 %{_topdir}/BUILD/usr/bin/* %{buildroot}%{_bindir}
+%{__install} -v -m 0755 %{_topdir}/BUILD/usr/lib/ele/* %{buildroot}%{_libdir}/ele
 %{__install} -v -m 644  %{_topdir}/BUILD/LICENSE %{buildroot}/usr/share/licenses/siakhooi-ele
 
 %files
@@ -24,6 +26,7 @@ docker compose cluster for local developments.
 %{_bindir}/ele-config
 %{_bindir}/ele-config-edit
 %{_bindir}/ele-config-set
+%{_libdir}/ele/applications-list
 
 %changelog
 * Tue Apr 7 2026 Siak Hooi <siakhooi@gmail.com> - 0.2.0

@@ -17,6 +17,12 @@ mkdir -p "$build_bin_home"
 find $source_home/bin -type f -exec cp -vr {} "$build_bin_home" \;
 chmod 755 "$build_bin_home"/*
 
+# Lib File
+readonly build_lib_home=$build_home/usr/lib/ele
+mkdir -p "$build_lib_home"
+cp -vr $source_home/lib/* "$build_lib_home"
+chmod 755 "$build_lib_home"/*
+
 # License
 cp -vf ./LICENSE "$build_home"
 
