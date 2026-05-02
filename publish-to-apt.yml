@@ -1,0 +1,10 @@
+repo: siakhooi/apt
+branch: main
+git_commit_user: ele
+git_commit_email: ele@siakhooi.github.io
+git_commit_message: "ele: Auto deploy"
+
+files:
+  - source: siakhooi-ele_*_amd64.deb
+    target: docs/pool/main/binary-amd64/
+    items: 1

@@ -1,0 +1,10 @@
+repo: siakhooi/rpms
+branch: main
+git_commit_user: ele
+git_commit_email: ele@siakhooi.github.io
+git_commit_message: "ele: Auto deploy"
+
+files:
+  - source: siakhooi-ele-*.fc*.noarch.rpm
+    target: docs/
+    items: 1
