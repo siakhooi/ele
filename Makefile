@@ -23,6 +23,6 @@ rpm-install:
 rpm-uninstall:
 	rpm -e siakhooi-ele
 docker-build-rpm:
-	docker run --rm -v $(CURDIR):/workspaces docker.io/siakhooi/devcontainer:rpm scripts/build-rpms.sh
+	docker run --rm -v $(CURDIR):/workspaces docker.io/siakhooi/devcontainer:rpm44 scripts/build-rpms.sh
 docker-build-deb:
-	docker run --rm -v $(CURDIR):/workspaces docker.io/siakhooi/devcontainer:deb scripts/build-deb.sh
+	docker run --rm -v $(CURDIR):/workspaces docker.io/siakhooi/devcontainer:deb2604 scripts/build-deb.sh
