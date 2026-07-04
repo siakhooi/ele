@@ -1,4 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# Description: This script is used to edit the configuration file for the ele-cli tool.
+# Usage: ele-config-edit [options]
+#
+set -Eeuo pipefail
 
 usage() {
 	echo "Usage: $(basename "$0") [-h]"
