@@ -2,7 +2,7 @@ repo: siakhooi/apt
 branch: main
 git_commit_user: ele
 git_commit_email: ele@siakhooi.github.io
-git_commit_message: "ele: Auto deploy"
+git_commit_message: "{repo_name}: {ref_name} | {commit_short}"
 
 files:
   - source: siakhooi-ele_*_amd64.deb
