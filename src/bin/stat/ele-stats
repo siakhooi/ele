@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+#
+# Description: This script is used to display the resource usage statistics of containers in a specific project. It can show the statistics in a streaming mode or as a one-time snapshot.
+# Usage: ele-stats [options]
+
+set -Eeuo pipefail
+
+usage() {
+	echo "Usage: $(basename "$0") [-h] [-s]"
+	echo " -h show this help message"
+	echo " -s stream"
+}
+stream=false
+while getopts "hs" arg; do
+	case $arg in
+	h)
+		usage
+		exit 0
+		;;
+	s)
+		stream=true
+		;;
+	*)
+		usage
+		exit 1
+		;;
+	esac
+done
+shift $((OPTIND - 1))
+if [[ $# -ne 0 ]]; then
+	usage
+	exit 0
+fi
+
+project=$(ele-config .cluster.project)
+
+containers=()
+while IFS= read -r container_id; do
+	containers+=("$container_id")
+done < <(docker ps --filter "label=com.docker.compose.project=$project" --format '{{.ID}}')
+
+if [[ $stream == true ]]; then
+	docker stats "${containers[@]}"
+
+else
+
+	docker stats --no-stream "${containers[@]}" | sort -k 4 -h
+fi

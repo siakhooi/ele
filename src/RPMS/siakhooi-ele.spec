@@ -25,6 +25,8 @@ docker compose cluster for local developments.
 %license LICENSE
 %{_bindir}/ele-config
 %{_bindir}/ele-config-set
+%{_bindir}/ele-ps
+%{_bindir}/ele-stats
 %{_libdir}/ele/applications-list
 
 %changelog
