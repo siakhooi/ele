@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# Description: This script is used to display the list of containers in a specific project. It can show additional information such as ports and size based on the provided options.
+# Usage: ele-ps [options]
+
+set -Eeuo pipefail
+
+usage() {
+	echo "Usage: $(basename "$0") [-h] [-p] [-s]"
+	echo "-p   show ports"
+	echo "-s   show size"
+
+}
+show_ports=false
+show_size=false
+while getopts "hps" arg; do
+	case $arg in
+	h)
+		usage
+		exit 0
+		;;
+	p)
+		show_ports=true
+		;;
+	s)
+		show_size=true
+		;;
+	*)
+		usage
+		exit 1
+		;;
+	esac
+done
+shift $((OPTIND - 1))
+if [[ $# -ne 0 ]]; then
+	usage
+	exit 0
+fi
+
+project=$(ele-config .cluster.project)
+format='table {{.ID}}\t{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Image}}'
+if [[ $show_size == true ]]; then
+	format+='\t{{.Size}}'
+fi
+if [[ $show_ports == true ]]; then
+	format+='\t{{.Ports}}'
+fi
+docker ps \
+	--filter "label=com.docker.compose.project=$project" \
+	--format "$format"
