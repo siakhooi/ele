@@ -1,25 +1,34 @@
 #!/usr/bin/env bash
 #
-# Description: This script is used to read the configuration file for the ele-cli tool. It can display the entire configuration or a specific value based on a provided YAML path.
+# Description: This script is used to read or edit the configuration file for the ele-cli tool.
+#              It can display the entire configuration or a specific value based on a provided YAML path.
 # Usage: ele-config [options]
 #
 
 set -Eeuo pipefail
 
 usage() {
-	echo "Usage: $(basename "$0") [-h] [yaml_path]"
+	echo "Usage: $(basename "$0") [-h] [-e] [yaml_path]"
+	echo "Options:"
+	echo "  -h    Show this help message and exit"
+	echo "  -e    Use editor to edit config file"
 }
+
+action=default
 
 die() {
 	echo.error "$*" >&2
 	exit 1
 }
 
-while getopts "h" arg; do
+while getopts "he" arg; do
 	case $arg in
 	h)
 		usage
 		exit 0
+		;;
+	e)
+		action=edit
 		;;
 	*)
 		usage
@@ -29,25 +38,46 @@ while getopts "h" arg; do
 done
 shift $((OPTIND - 1))
 
-if [[ $# -gt 1 ]]; then
-	usage
-	exit 1
-fi
-
-if ! command -v yq &>/dev/null; then
-	die "yq is not installed"
-fi
-
 readonly config_file="${HOME}/.ele/config.yaml"
+readonly config_editor="${EDITOR:-vi}"
 
-if [[ ! -f $config_file ]]; then
-	die "Configuration file not found: $config_file"
-fi
+if [[ $action == "edit" ]]; then
+	if [[ $# -gt 0 ]]; then
+		usage
+		exit 1
+	fi
 
-if [[ $# -eq 0 ]]; then
-	yq '.' "$config_file"
+	if ! command -v "$config_editor" &>/dev/null; then
+		die "Editor not found: $config_editor"
+	fi
+	if [[ ! -f $config_file ]]; then
+		mkdir -p "$(dirname "$config_file")"
+		touch "$config_file"
+	fi
+
+	"$config_editor" "$config_file"
 	exit 0
-fi
+else
 
-readonly yaml_path=$1
-yq -r "${yaml_path} // \"\"" "$config_file"
+	if [[ $# -gt 1 ]]; then
+		usage
+		exit 1
+	fi
+
+	if ! command -v yq &>/dev/null; then
+		die "yq is not installed"
+	fi
+
+	if [[ ! -f $config_file ]]; then
+		die "Configuration file not found: $config_file"
+	fi
+
+	if [[ $# -eq 0 ]]; then
+		yq '.' "$config_file"
+		exit 0
+	fi
+
+	readonly yaml_path=$1
+	yq -r "${yaml_path} // \"\"" "$config_file"
+
+fi
