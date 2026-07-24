@@ -1,5 +1,5 @@
 Name:           siakhooi-ele
-Version:        0.2.0
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        docker compose cluster for local developments
 
@@ -34,6 +34,16 @@ docker compose cluster for local developments.
 %{_libdir}/ele/list-script-setup.sh
 
 %changelog
+* Fri Jul 24 2026 Siak Hooi <siakhooi@gmail.com> - 0.3.0
+- bin change: combine ele-config and ele-config-edit
+- bin add: ele-ps
+- bin add: ele-stats
+- lib add: list-compose-init.sh
+- lib add: list-compose-running.sh
+- lib add: list-compose.sh
+- lib add: list-script-execution.sh
+- lib add: list-script-setup.sh
+
 * Tue Apr 7 2026 Siak Hooi <siakhooi@gmail.com> - 0.2.0
 - ele-config -h
 - ele-config-edit -h
