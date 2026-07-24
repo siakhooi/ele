@@ -27,7 +27,11 @@ docker compose cluster for local developments.
 %{_bindir}/ele-config-set
 %{_bindir}/ele-ps
 %{_bindir}/ele-stats
-%{_libdir}/ele/applications-list
+%{_libdir}/ele/list-compose-init.sh
+%{_libdir}/ele/list-compose-running.sh
+%{_libdir}/ele/list-compose.sh
+%{_libdir}/ele/list-script-execution.sh
+%{_libdir}/ele/list-script-setup.sh
 
 %changelog
 * Tue Apr 7 2026 Siak Hooi <siakhooi@gmail.com> - 0.2.0
