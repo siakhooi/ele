@@ -90,6 +90,7 @@ main() {
 	rename_deb_package
 
 	generate_checksums
+  list_deb_contents
 
 }
 # ===== Entrypoint =====
