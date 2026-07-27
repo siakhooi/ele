@@ -32,6 +32,11 @@ docker compose cluster for local developments.
 %{_libdir}/ele/list-compose.sh
 %{_libdir}/ele/list-script-execution.sh
 %{_libdir}/ele/list-script-setup.sh
+%{_libdir}/ele/get-path-compose-init.sh
+%{_libdir}/ele/get-path-compose.sh
+%{_libdir}/ele/get-path-script-exec.sh
+%{_libdir}/ele/get-path-script-setup.sh
+
 
 %changelog
 * Fri Jul 24 2026 Siak Hooi <siakhooi@gmail.com> - 0.3.0
