@@ -1,5 +1,5 @@
 Name:           siakhooi-ele
-Version:        0.3.0
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        docker compose cluster for local developments
 
@@ -39,6 +39,13 @@ docker compose cluster for local developments.
 
 
 %changelog
+
+* Wed Jul 29 2026 Siak Hooi <siakhooi@gmail.com> - 0.4.0
+- lib add: get-path-compose-init.sh
+- lib add: get-path-compose.sh
+- lib add: get-path-script-exec.sh
+- lib add: get-path-script-setup.sh
+
 * Fri Jul 24 2026 Siak Hooi <siakhooi@gmail.com> - 0.3.0
 - bin change: combine ele-config and ele-config-edit
 - bin add: ele-ps
