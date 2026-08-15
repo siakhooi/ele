@@ -67,12 +67,11 @@ for FILE in "$@"; do
 	if [[ -f $env_file ]]; then
 		compose_options+=(--env-file="$env_file")
 	fi
-	(
+	if ! {
 		set -x
 		docker compose "${options[@]}" "${compose_options[@]}" -f "$compose_file" up "${up_options[@]}"
-	)
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to start $FILE" >&2
-    exit 1
-  fi
+	}; then
+		echo "Failed to start $FILE" >&2
+		exit 1
+	fi
 done

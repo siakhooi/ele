@@ -12,4 +12,4 @@ if ! command -v shellcheck &>/dev/null; then
 fi
 
 set -x
-find src/bin -type f -exec shellcheck {} \;
+find src/bin -type f -exec shellcheck {} +
