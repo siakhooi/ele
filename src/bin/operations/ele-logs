@@ -44,7 +44,7 @@ fi
 readonly composeName=$1
 compose_file=$(/usr/lib/ele/get-path-compose.sh "$composeName")
 if [[ ! -f $compose_file ]]; then
-	echo "Compose file not exists. ($compose_file)" 2>&1
+	echo "Compose file not exists for $composeName. ($compose_file)" 2>&1
 	exit 2
 fi
 
