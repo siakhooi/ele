@@ -1,5 +1,5 @@
 Name:           siakhooi-ele
-Version:        0.4.0
+Version:        0.5.0
 Release:        1%{?dist}
 Summary:        docker compose cluster for local developments
 
@@ -41,6 +41,9 @@ docker compose cluster for local developments.
 
 
 %changelog
+* Sat Aug 15 2026 Siak Hooi <siakhooi@gmail.com> - 0.5.0
+- bin add: ele-up
+- bin add: ele-down
 
 * Wed Jul 29 2026 Siak Hooi <siakhooi@gmail.com> - 0.4.0
 - lib add: get-path-compose-init.sh
