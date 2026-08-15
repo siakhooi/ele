@@ -66,7 +66,7 @@ fi
 
 for FILE in "$@"; do
 
-	compose_file=$(/usr/lib/ele/ele-get-compose-file-path.sh "$FILE")
+	compose_file=$(/usr/lib/ele/get-path-compose.sh "$FILE")
 
 	if [[ ! -f $compose_file ]]; then
 		echo "Compose file not exists for $FILE. ($compose_file)" 2>&1
