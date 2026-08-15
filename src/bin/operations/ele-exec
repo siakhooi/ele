@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+usage() {
+	echo "Usage: $(basename "$0") [-h] exec_script_name [args...]"
+	echo " -h show this help"
+}
+while getopts "h" arg; do
+	case $arg in
+	h)
+		usage
+		exit 0
+		;;
+	*)
+		usage
+		exit 1
+		;;
+	esac
+done
+shift $((OPTIND - 1))
+if [[ $# -eq 0 ]]; then
+	usage
+	exit 0
+fi
+
+name=$1
+shift
+
+ele_home=$(ele-config .cluster.home)
+ele_project=$(ele-config .cluster.project)
+if [[ -z $ele_home ]]; then
+	echo "Cluster home is not set. Please set it using 'ele-config-set .cluster.home <path>'" >&2
+	exit 1
+fi
+if [[ ! -d $ele_home ]]; then
+	echo "Cluster home directory does not exist. ($ele_home)" >&2
+	exit 1
+fi
+if [[ -z $ele_project ]]; then
+	echo "Cluster Project is not set. Please set it using 'ele-config-set .cluster.project <project>'" >&2
+	exit 1
+fi
+
+script_name=$("/usr/lib/ele/get-path-script-exec.sh" "$name")
+
+if [[ -e $script_name ]]; then
+
+	# Add --env-file for each file found in $ele_home/env
+	if [[ -d "$ele_home/env" ]]; then
+		set -a
+		while IFS= read -r envfile; do
+			# shellcheck disable=SC1090
+			source "$envfile"
+		done < <(find "$ele_home/env" -type f)
+	fi
+  export ELE_HOME="$ele_home"
+  export ELE_PROJECT="$ele_project"
+
+  cd "$(dirname "$script_name")" || exit 1
+	exec "$script_name" "$@"
+else
+	echo "Exec file not executable/exists. ($script_name)" >&2
+	exit 1
+fi
