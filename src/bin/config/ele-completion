@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+
+_ele_try_source_fzf_completion() {
+	if [[ $(type -t _fzf_complete 2>/dev/null) == function ]]; then
+		return 0
+	fi
+	local fzf_bin dir script
+	fzf_bin=$(command -v fzf) || return 1
+	dir=$(dirname "$fzf_bin")
+	if [[ -n "${FZF_PATH:-}" && -f "${FZF_PATH}/shell/completion.bash" ]]; then
+		# shellcheck disable=SC1090,SC1091
+		source "${FZF_PATH}/shell/completion.bash" && [[ $(type -t _fzf_complete) == function ]] && return 0
+	fi
+	for script in \
+		"${dir}/../shell/completion.bash" \
+		"$HOME/.fzf/shell/completion.bash" \
+		"/usr/share/fzf/completion.bash" \
+		"/usr/share/doc/fzf/examples/completion.bash"; do
+		if [[ -f "$script" ]]; then
+			# shellcheck disable=SC1090,SC1091
+			source "$script" && [[ $(type -t _fzf_complete) == function ]] && return 0
+		fi
+	done
+	return 1
+}
+
+_ele_use_fzf=false
+if command -v fzf &>/dev/null && _ele_try_source_fzf_completion; then
+	_ele_use_fzf=true
+fi
+
+if [[ "$_ele_use_fzf" == true ]]; then
+	_ele_list_compose_completions() {
+		FZF_COMPLETION_TRIGGER='' _fzf_complete +m -- "$@" < <(
+			tr ' ' '\n' <<< "$( "/usr/lib/ele/list-compose.sh" )"
+		)
+	}
+
+	_ele_list_compose_init_completions() {
+		FZF_COMPLETION_TRIGGER='' _fzf_complete +m -- "$@" < <(
+			tr ' ' '\n' <<< "$( "/usr/lib/ele/list-compose-init.sh" )"
+		)
+	}
+
+	_ele_list_script_execution_completions() {
+		FZF_COMPLETION_TRIGGER='' _fzf_complete +m -- "$@" < <(
+			tr ' ' '\n' <<< "$( "/usr/lib/ele/list-script-execution.sh" )"
+		)
+	}
+
+	_ele_list_script_setup_completions() {
+		FZF_COMPLETION_TRIGGER='' _fzf_complete +m -- "$@" < <(
+			tr ' ' '\n' <<< "$( "/usr/lib/ele/list-script-setup.sh" )"
+		)
+	}
+	_ele_list_compose_running_completions() {
+		FZF_COMPLETION_TRIGGER='' _fzf_complete +m -- "$@" < <(
+			tr ' ' '\n' <<< "$( "/usr/lib/ele/list-compose-running.sh" )"
+		)
+	}
+else
+	_ele_list_compose_completions() {
+		local cur opts
+		COMPREPLY=()
+		cur="${COMP_WORDS[COMP_CWORD]}"
+		opts=$("/usr/lib/ele/list-compose.sh")
+		# shellcheck disable=SC2207
+		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+		return 0
+	}
+
+	_ele_list_compose_init_completions() {
+		local cur opts
+		COMPREPLY=()
+		cur="${COMP_WORDS[COMP_CWORD]}"
+		opts=$("/usr/lib/ele/list-compose-init.sh")
+		# shellcheck disable=SC2207
+		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+		return 0
+	}
+
+	_ele_list_script_execution_completions() {
+		local cur opts
+		COMPREPLY=()
+		cur="${COMP_WORDS[COMP_CWORD]}"
+		opts=$("/usr/lib/ele/list-script-execution.sh")
+		# shellcheck disable=SC2207
+		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+		return 0
+	}
+
+	_ele_list_script_setup_completions() {
+		local cur opts
+		COMPREPLY=()
+		cur="${COMP_WORDS[COMP_CWORD]}"
+		opts=$("/usr/lib/ele/list-script-setup.sh")
+		# shellcheck disable=SC2207
+		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+		return 0
+	}
+	_ele_list_compose_running_completions() {
+		local cur opts
+		COMPREPLY=()
+		cur="${COMP_WORDS[COMP_CWORD]}"
+		opts=$("/usr/lib/ele/list-compose-running.sh")
+		# shellcheck disable=SC2207
+		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+		return 0
+	}
+fi
+
+complete -F _ele_list_compose_completions ele-up
+complete -F _ele_list_compose_running_completions ele-down
+complete -F _ele_list_compose_running_completions ele-logs
+complete -F _ele_list_compose_init_completions ele-init
+complete -F _ele_list_script_execution_completions ele-exec
+complete -F _ele_list_script_setup_completions ele-setup
