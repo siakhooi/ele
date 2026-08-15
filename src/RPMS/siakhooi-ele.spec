@@ -23,6 +23,7 @@ docker compose cluster for local developments.
 
 %files
 %license LICENSE
+%{_bindir}/ele-completion
 %{_bindir}/ele-config
 %{_bindir}/ele-config-set
 %{_bindir}/ele-down
