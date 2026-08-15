@@ -25,8 +25,10 @@ docker compose cluster for local developments.
 %license LICENSE
 %{_bindir}/ele-config
 %{_bindir}/ele-config-set
+%{_bindir}/ele-down
 %{_bindir}/ele-ps
 %{_bindir}/ele-stats
+%{_bindir}/ele-up
 %{_libdir}/ele/list-compose-init.sh
 %{_libdir}/ele/list-compose-running.sh
 %{_libdir}/ele/list-compose.sh

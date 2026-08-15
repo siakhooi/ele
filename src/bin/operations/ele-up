@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+usage() {
+	echo "Usage: $(basename "$0") [-h] [-a] composeName..."
+	echo " -h show this help"
+	echo " -a attach to the compose file"
+}
+attach=false
+while getopts "ha" arg; do
+	case $arg in
+	h)
+		usage
+		exit 0
+		;;
+	a)
+		attach=true
+		;;
+	*)
+		usage
+		exit 1
+		;;
+	esac
+done
+shift $((OPTIND - 1))
+if [[ $# -eq 0 ]]; then
+	usage
+	exit 0
+fi
+
+if [[ $attach == true && $# -gt 1 ]]; then
+	echo "Error: Cannot attach to multiple compose files." 2>&1
+	exit 1
+fi
+
+ele_home=$(ele-config .cluster.home)
+ele_project=$(ele-config .cluster.project)
+if [[ -z $ele_home ]]; then
+	echo "Cluster home is not set. Please set it using 'ele-config-set .cluster.home <path>'" 2>&1
+	exit 1
+fi
+if [[ ! -d $ele_home ]]; then
+	echo "Cluster home directory does not exist. ($ele_home)" 2>&1
+	exit 1
+fi
+if [[ -z $ele_project ]]; then
+	echo "Cluster Project is not set. Please set it using 'ele-config-set .cluster.project <project>'" 2>&1
+	exit 1
+fi
+
+options=()
+options+=(--project-name "$ele_project")
+
+# Add --env-file for each file found in $ele_home/env
+if [[ -d "$ele_home/env" ]]; then
+	while IFS= read -r envfile; do
+		options+=(--env-file="$envfile")
+	done < <(find "$ele_home/env" -type f)
+fi
+
+up_options=()
+if [[ $attach == true ]]; then
+	up_options+=(--attach-dependencies)
+else
+	up_options+=(--wait)
+fi
+
+for FILE in "$@"; do
+
+	compose_file=$(/usr/lib/ele/ele-get-compose-file-path.sh "$FILE")
+
+	if [[ ! -f $compose_file ]]; then
+		echo "Compose file not exists for $FILE. ($compose_file)" 2>&1
+	else
+		env_file=$(dirname "$compose_file")/.env
+		compose_options=()
+		if [[ -f $env_file ]]; then
+			compose_options+=(--env-file="$env_file")
+		fi
+
+		(
+			set -x
+			docker compose "${options[@]}" "${compose_options[@]}" -f "$compose_file" up "${up_options[@]}"
+		)
+	fi
+done
