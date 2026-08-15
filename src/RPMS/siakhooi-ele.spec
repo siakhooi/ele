@@ -29,6 +29,7 @@ docker compose cluster for local developments.
 %{_bindir}/ele-init
 %{_bindir}/ele-logs
 %{_bindir}/ele-ps
+%{_bindir}/ele-setup
 %{_bindir}/ele-stats
 %{_bindir}/ele-up
 %{_libdir}/ele/list-compose-init.sh
