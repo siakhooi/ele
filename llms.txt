@@ -1,0 +1,220 @@
+# ele
+
+> `ele` (package `siakhooi-ele`) runs a local Docker Compose cluster. Many compose stacks live under one directory and share one Compose project name. There is no `ele` dispatcher: each action is its own command on `PATH`.
+
+Version 0.6.0. Source: https://github.com/siakhooi/ele. License: MIT.
+
+Agents operate the installed commands. Do not call `docker compose` directly for stacks this tool manages, except to inspect something `ele-*` cannot show. Discover names with the list helpers. Do not invent stack or script names.
+
+## Install and runtime
+
+User commands install to `/usr/bin`. Helpers install to `/usr/lib/ele` and are invoked by that absolute path. Running the scripts from `src/` does not work until those paths exist: the commands call `/usr/lib/ele/*.sh` and call each other on `PATH`.
+
+Debian:
+
+```
+sudo curl -L https://siakhooi.github.io/apt/siakhooi-apt.list | sudo tee /etc/apt/sources.list.d/siakhooi-apt.list > /dev/null
+sudo curl -L https://siakhooi.github.io/apt/siakhooi-apt.gpg  | sudo tee /usr/share/keyrings/siakhooi-apt.gpg > /dev/null
+sudo apt update
+sudo apt install siakhooi-ele
+```
+
+RPM:
+
+```
+sudo curl -L https://siakhooi.github.io/rpms/siakhooi-rpms.repo | sudo tee /etc/yum.repos.d/siakhooi-rpms.repo > /dev/null
+sudo yum install siakhooi-ele
+```
+
+Required besides the package:
+
+- Docker Compose v2 (`docker compose`, not `docker-compose`)
+- [mikefarah/yq](https://github.com/mikefarah/yq) (`yq eval`, `yq -r`, `yq -oj`). Python `yq` is a different CLI and will not work.
+- `jq` (`ele-config-set -f`, and `/usr/lib/ele/list-compose-running.sh`)
+- `echo.error` and `is-true` on `PATH`. Config and helper scripts call them by name. They are not in this package. `ele-up`, `ele-down`, `ele-init`, `ele-logs`, `ele-exec`, `ele-setup`, `ele-ps`, and `ele-stats` do not need them for the success path.
+
+## Configure before any stack command
+
+Config file: `$HOME/.ele/config.yaml`. Both keys must be set before `ele-up`, `ele-down`, `ele-init`, `ele-logs`, `ele-exec`, or `ele-setup`.
+
+```yaml
+cluster:
+  home: /absolute/path/to/cluster
+  project: myproject
+```
+
+- `.cluster.home` is the cluster root. It must be an existing directory.
+- `.cluster.project` is the Compose project name (`docker compose --project-name`). Every stack shares it. Container labels, `ele-ps`, `ele-stats`, and `ele-down -A` all key off this name. Service names must be unique across stacks in the same project.
+
+```
+ele-config                          # print the whole file
+ele-config .cluster.home            # print one value; missing path prints an empty line
+ele-config .cluster.project
+ele-config -e                       # open the file in $EDITOR, or vi
+ele-config-set .cluster.home /abs/path/to/cluster
+ele-config-set .cluster.project myproject
+ele-config-set .cluster.home ""     # empty value deletes the key
+```
+
+`ele-config-set` stores a plain value as a YAML string. `-j` treats the value as JSON (`ele-config-set -j .some.key '{"a":1}'`). `-f` reads YAML from a file and writes it as compact JSON (`ele-config-set -f .some.key ./value.yaml`). `-f` and `-j` cannot be combined. The file is created if missing.
+
+`ele-ps` and `ele-stats` read `.cluster.project` only. An empty project still runs `docker ps` with an empty project filter.
+
+## Cluster directory
+
+Paths are relative to `.cluster.home`. Names may contain slashes. Avoid spaces.
+
+```
+$ELE_HOME/
+  env/                         # every regular file is an env file, any extension, including nested files
+    common.env
+  postgres/
+    compose.yaml               # or compose.yml, docker-compose.yaml, docker-compose.yml
+    .env                       # optional; applies only to this stack
+  kafka/
+    compose-init.yaml          # or compose-init.yml, docker-compose-init.yaml, docker-compose-init.yml
+  jobs/migrate.exec.sh         # ele-exec jobs/migrate
+  bootstrap/topics.setup.sh    # ele-setup bootstrap/topics
+```
+
+Compose file search order for `ele-up`, `ele-down`, and `ele-logs` stops at the first hit: `compose.yaml`, `compose.yml`, `docker-compose.yaml`, `docker-compose.yml`.
+
+Init file search order for `ele-init`: `compose-init.yaml`, `compose-init.yml`, `docker-compose-init.yaml`, `docker-compose-init.yml`. Init files are separate from the runtime compose file. A directory can have both.
+
+Env passed to `docker compose`, in order (later files win on duplicate keys):
+
+1. Each file under `$ELE_HOME/env`, in `find` order (unsorted).
+2. `$ELE_HOME/<stack>/.env` when that file exists, next to the compose file.
+
+`ele-exec` and `ele-setup` do not read the per-stack `.env`. They `source` every file under `$ELE_HOME/env` with `set -a`, export `ELE_HOME` and `ELE_PROJECT`, `cd` to the script's directory, then `exec` the script with the remaining arguments.
+
+## Discover names
+
+Print one name per line. Use these instead of guessing.
+
+```
+/usr/lib/ele/list-compose.sh             # stack dirs that have a runtime compose file
+/usr/lib/ele/list-compose-init.sh        # stack dirs that have an init compose file
+/usr/lib/ele/list-compose-running.sh     # stacks in this project currently registered with Compose
+/usr/lib/ele/list-script-execution.sh    # ele-exec names (path without .exec.sh)
+/usr/lib/ele/list-script-setup.sh        # ele-setup names (path without .setup.sh)
+/usr/lib/ele/get-path-compose.sh postgres
+/usr/lib/ele/get-path-compose-init.sh kafka
+/usr/lib/ele/get-path-script-exec.sh jobs/migrate
+/usr/lib/ele/get-path-script-setup.sh bootstrap/topics
+```
+
+`get-path-*` prints one absolute path on stdout. A missing file exits 1.
+
+Bash completion, only useful in an interactive shell: `source "$(command -v ele-completion)"`. It uses `fzf` when the fzf bash completion function is available. `ele-up` completes all stacks, `ele-down` and `ele-logs` complete running stacks, `ele-init` completes init stacks, `ele-exec` and `ele-setup` complete scripts. Running `ele-completion` as a command does nothing useful; the `complete` builtins die with the process.
+
+## Commands
+
+### ele-up — start stacks
+
+```
+ele-up postgres
+ele-up postgres kafka redis
+ele-up -a postgres          # foreground; one stack only
+```
+
+Default is `docker compose up --wait` (detached, return when services are running or healthy). `-a` uses `up --attach-dependencies` and refuses more than one name. Each name is a separate `docker compose` invocation, sequential, same `--project-name`. A missing compose file prints `Compose file not exists for <name>` and the loop continues. Exit code stays 0 if the only problem is a missing file. The expanded `docker compose` line is traced with `set -x`.
+
+`-a` and a single `ele-init` attach to the container stdio and block until the stack stops. Do not use them when the agent must continue.
+
+### ele-down — stop stacks
+
+```
+ele-down postgres
+ele-down postgres kafka
+ele-down -A                 # every stack currently listed for this project
+```
+
+Runs `docker compose down` with no `-v` and no `--remove-orphans`. Volumes and anonymous data survive. `-A` reads running compose files from `docker compose ls` for this project; it does not scan the cluster tree. A missing file is reported and skipped. With neither names nor `-A`, it prints usage and exits 0.
+
+### ele-init — start init stacks
+
+```
+ele-init kafka
+```
+
+Same project and env rules as `ele-up`, but the file is `compose-init.*`. One name: `up --attach-dependencies` (blocks). Several names: plain `docker compose up` (also foreground, no `--wait`), one after another, so the second starts only after the first `up` exits. A missing init file exits 2. A failed `up` exits 1 and later names are not started.
+
+### ele-logs — logs for one stack
+
+```
+ele-logs postgres
+ele-logs -f postgres        # follow; blocks
+```
+
+Exactly one name. Missing compose file exits 2. `-f` is `docker compose logs --follow` and does not return. Completion only suggests running stacks; the command itself accepts any stack that has a compose file.
+
+### ele-ps — containers in the project
+
+```
+ele-ps
+ele-ps -p                   # add Ports
+ele-ps -s                   # add Size
+ele-ps -ps
+```
+
+`docker ps` filtered by `label=com.docker.compose.project=<project>`. Columns: ID, Names, State, Status, Image, then Size and Ports when asked. No name argument. This is the status check after `ele-up`.
+
+### ele-stats — resource usage
+
+```
+ele-stats                   # one sample, sorted by memory percent (column 4)
+ele-stats -s                # docker stats stream; blocks
+```
+
+Same project filter as `ele-ps`. With no matching containers, `docker stats` is invoked with an empty list and fails.
+
+### ele-exec and ele-setup — host scripts
+
+```
+ele-exec jobs/migrate
+ele-exec jobs/migrate --dry-run
+ele-setup bootstrap/topics
+```
+
+The name is the path under the cluster home without the suffix: `jobs/migrate` runs `$ELE_HOME/jobs/migrate.exec.sh`. The file must exist (`-e`). It is not checked for `+x` first; `exec` fails later if it is not executable. Extra arguments are passed through. The process replaces the `ele-exec` / `ele-setup` process (`exec`), so the script's exit code is the command's exit code.
+
+Inside the script, `ELE_HOME`, `ELE_PROJECT`, and every variable from `$ELE_HOME/env/*` are already exported. The working directory is the script's directory, not the cluster root and not the caller's cwd.
+
+## Agent workflow
+
+1. Read `ele-config .cluster.home` and `ele-config .cluster.project`. If either is empty, set it with `ele-config-set` before anything else. Home must already exist.
+2. List what is real: `/usr/lib/ele/list-compose.sh`, `list-compose-init.sh`, `list-script-execution.sh`, `list-script-setup.sh`.
+3. Start with `ele-up <name>` (no `-a`). Confirm with `ele-ps` or `ele-ps -p`.
+4. Read logs with `ele-logs <name>` (no `-f`) so the call returns.
+5. Stop one stack with `ele-down <name>`. Stop the project with `ele-down -A`.
+6. Run host hooks with `ele-setup` or `ele-exec` only for names the list helpers printed.
+
+Foreground flags that block the session: `ele-up -a`, `ele-init` (always attaches), `ele-logs -f`, `ele-stats -s`.
+
+## Exit and output quirks
+
+- Unknown flags exit 1. Missing required names usually print usage and exit 0 (`ele-up`, `ele-down`, `ele-init`, `ele-logs`, `ele-exec`, `ele-setup`, `ele-config-set`). `ele-config` with extra arguments exits 1.
+- `ele-up` and `ele-down` keep going after a missing compose file. `ele-init` and `ele-logs` stop.
+- Several error lines are written with `echo ... 2>&1`, which still prints on stdout. `ele-exec` and `ele-setup` send their own errors to stderr. Do not treat stdout as pure machine data when a command fails.
+- `set -x` on the `docker compose` invocations prefixes those lines with `+` on stderr.
+- `ele-down` does not delete volumes. A second `ele-up` reuses existing volumes.
+- One Compose project means one namespace. Two stacks that both define a service named `db` collide.
+
+## Repo layout
+
+This repository builds the package. It is not a cluster home.
+
+- `src/bin/operations/` — `ele-up`, `ele-down`, `ele-init`, `ele-logs`, `ele-exec`, `ele-setup`
+- `src/bin/config/` — `ele-config`, `ele-config-set`, `ele-completion`
+- `src/bin/stat/` — `ele-ps`, `ele-stats`
+- `src/lib/` — list and path helpers, installed to `/usr/lib/ele`
+- `justfile` — `just shellcheck`, `just build-deb`, `just build-rpm`, `just set-version`, `just release`
+
+`build.env` sets `PACKAGE_NAME=siakhooi-ele`. `release.env` sets `RELEASE_VERSION`.
+
+## Docs
+
+- [Repository](https://github.com/siakhooi/ele): source, issues, and releases
+- [Debian apt repo](https://siakhooi.github.io/apt/): `siakhooi-ele` deb packages
+- [RPM repo](https://siakhooi.github.io/rpms/): `siakhooi-ele` rpm packages
